@@ -1,0 +1,11 @@
+@import "tailwindcss";
+:root {
+    --color-brand-primary: #03C5C2;
+    --color-brand-secondary: #FFCD02;
+    --color-brand-accent: #003366;
+    --color-brand-bg: #F8FAFC;
+    --color-brand-text: #1F2937;
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+}
