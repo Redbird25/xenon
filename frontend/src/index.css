@@ -1,11 +1,91 @@
 @import "tailwindcss";
+
+/* Градиентный фон + сетка */
 :root {
-    --color-brand-primary: #03C5C2;
-    --color-brand-secondary: #FFCD02;
-    --color-brand-accent: #003366;
-    --color-brand-bg: #F8FAFC;
-    --color-brand-text: #1F2937;
-    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
+    --navy: #003366;
+    --teal: #03C5C2;
+    --amber: #FFCD02;
+    --ink: #0B1220;
+    --glass: rgba(255,255,255,0.06);
+    --glass-border: rgba(255,255,255,0.18);
+}
+
+html, body, #root {
+    height: 100%;
+    background: radial-gradient(1200px 600px at 20% -10%, rgba(3,197,194,0.12), transparent 60%),
+    radial-gradient(1000px 500px at 90% 10%, rgba(255,205,2,0.10), transparent 60%),
+    linear-gradient(180deg, #0B1220 0%, #0B1220 100%);
+    color: #e7eaf3;
+}
+
+/* Тонкая сетка */
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+            linear-gradient(to right, rgba(255,255,255,0.045) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.045) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at 50% -20%, black 40%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Стеклянные карточки + подсветка */
+.glass {
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.02) inset,
+    0 10px 30px rgba(0,0,0,0.35);
+}
+
+.neon {
+    box-shadow: 0 0 20px rgba(3,197,194,0.35), 0 0 40px rgba(3,197,194,0.2) inset;
+}
+
+/* Анимированная линия-граница */
+.gradient-border {
+    position: relative;
+}
+.gradient-border::before {
+    z-index: -1;
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(90deg, #03C5C2, #FFCD02, #03C5C2);
+    background-size: 200% 100%;
+    animation: move 6s linear infinite;
+    -webkit-mask:
+            linear-gradient(#000 0 0) content-box,
+            linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+@keyframes move {
+    0% { background-position: 0% 50%;}
+    100%{ background-position: 200% 50%;}
+}
+
+/* Кнопка-неон */
+.btn-neon {
+    background: linear-gradient(180deg, rgba(3,197,194,0.18) 0%, rgba(3,197,194,0.06) 100%);
+    border: 1px solid rgba(3,197,194,0.35);
+    color: white;
+    transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.btn-neon:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255,205,2,0.6);
+    box-shadow: 0 8px 30px rgba(3,197,194,0.35), 0 0 0 1px rgba(255,205,2,0.25) inset;
+}
+
+/* Текстовые утилиты */
+.h1 {
+    @apply text-3xl md:text-4xl font-extrabold tracking-tight;
+}
+.muted {
+    color: #9AA6BF;
 }

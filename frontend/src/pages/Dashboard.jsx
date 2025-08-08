@@ -1,86 +1,96 @@
-// src/pages/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchMyCourses, createCourse } from '../api/courses';
 import { useNavigate } from 'react-router-dom';
+import { AppShell } from '../components/AppShell';
+import { GlassCard } from '../components/GlassCard';
+import {GenerationOverlay} from "../components/GenerationOverlay.jsx";
 
 export function Dashboard() {
     const { token } = useAuth();
     const navigate = useNavigate();
-
     const [courses, setCourses] = useState([]);
     const [error, setError] = useState(null);
     const [newTitle, setNewTitle] = useState('');
     const [newDesc, setNewDesc] = useState('');
+    const [generating, setGenerating] = useState(false);        // ← добавили
 
-    // загрузка списка курсов
     useEffect(() => {
-        fetchMyCourses(token)
-            .then(setCourses)
-            .catch(err => setError(err.message));
+        fetchMyCourses(token).then(setCourses).catch(e => setError(e.message));
     }, [token]);
 
-    // создание нового курса
-    const onCreate = async e => {
+    const onCreate = async (e) => {
         e.preventDefault();
+        setError(null);
+        setGenerating(true);                                      // ← показываем анимацию
         try {
             const created = await createCourse(token, { title: newTitle, description: newDesc });
             setCourses(prev => [...prev, created]);
-            setNewTitle('');
-            setNewDesc('');
-        } catch (err) {
-            setError(err.message);
+            setNewTitle(''); setNewDesc('');
+        } catch (e) {
+            setError(e.message || 'Не удалось создать курс');
+        } finally {
+            setGenerating(false);                                   // ← скрываем анимацию
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] p-6">
-            <h1 className="text-2xl font-bold mb-4 text-[#003366]">Мои курсы</h1>
-            {error && <div className="mb-4 text-red-600">{error}</div>}
+        <AppShell>
+            <GenerationOverlay visible={generating} />              {/* ← оверлей */}
 
-            {/* Список курсов: при клике переходим на детали */}
-            <ul className="space-y-3 mb-6">
-                {courses.map(c => (
-                    <li
-                        key={c.id}
-                        onClick={() => navigate(`/courses/${c.id}`)}
-                        className="cursor-pointer p-4 bg-white rounded shadow hover:shadow-lg transition"
-                    >
-                        <h2 className="text-lg font-semibold text-[#03C5C2]">{c.title}</h2>
-                        {c.description && (
-                            <p className="text-[#1F2937] mt-1">{c.description}</p>
-                        )}
-                        <small className="text-gray-500 block mt-2">
-                            Создан: {new Date(c.createdAt).toLocaleString()}
-                        </small>
-                    </li>
-                ))}
-            </ul>
+            <div className="flex flex-col lg:flex-row gap-8">
+                {/* Список курсов */}
+                <section className="flex-1">
+                    <h1 className="h1 mb-4">Мои курсы</h1>
+                    {error && <div className="text-red-400 mb-4">{error}</div>}
+                    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {courses.map(c => (
+                            <GlassCard key={c.id} onClick={() => navigate(`/courses/${c.id}`)}>
+                                <div className="flex items-start justify-between">
+                                    <h3 className="text-lg font-bold text-white">{c.title}</h3>
+                                    <span className="text-xs px-2 py-1 rounded bg-white/10 border border-white/15">
+                    #{c.id}
+                  </span>
+                                </div>
+                                {c.description && (
+                                    <p className="muted mt-2 line-clamp-3">{c.description}</p>
+                                )}
+                                <div className="mt-4 text-xs muted">
+                                    Создан: {new Date(c.createdAt).toLocaleString()}
+                                </div>
+                            </GlassCard>
+                        ))}
+                    </div>
+                </section>
 
-            {/* Форма создания курса */}
-            <form onSubmit={onCreate} className="max-w-md space-y-4 bg-white p-6 rounded shadow">
-                <h2 className="text-xl font-bold text-[#003366]">Новый курс</h2>
-                <input
-                    type="text"
-                    value={newTitle}
-                    onChange={e => setNewTitle(e.target.value)}
-                    placeholder="Заголовок курса"
-                    required
-                    className="w-full p-3 border border-[#03C5C2] rounded focus:ring-2 focus:ring-[#03C5C2]"
-                />
-                <textarea
-                    value={newDesc}
-                    onChange={e => setNewDesc(e.target.value)}
-                    placeholder="Описание (опционально)"
-                    className="w-full p-3 border border-[#03C5C2] rounded focus:ring-2 focus:ring-[#03C5C2]"
-                />
-                <button
-                    type="submit"
-                    className="w-full py-3 font-semibold rounded bg-[#03C5C2] hover:bg-[#FFCD02] text-white transition"
-                >
-                    Создать курс
-                </button>
-            </form>
-        </div>
+                {/* Форма создания */}
+                <aside className="w-full lg:w-[380px]">
+                    <div className="glass gradient-border rounded-2xl p-6">
+                        <h2 className="text-xl font-bold mb-4">Создать курс</h2>
+                        <form className="space-y-4" onSubmit={onCreate}>
+                            <input
+                                value={newTitle}
+                                onChange={e => setNewTitle(e.target.value)}
+                                placeholder="Заголовок курса"
+                                required
+                                className="w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#03C5C2]"
+                            />
+                            <textarea
+                                value={newDesc}
+                                onChange={e => setNewDesc(e.target.value)}
+                                placeholder="Короткое описание"
+                                className="w-full rounded-xl bg-white/5 border border-white/15 px-4 py-3 h-28 focus:outline-none focus:ring-2 focus:ring-[#03C5C2]"
+                            />
+                            <button className="btn-neon rounded-xl w-full py-3 font-semibold">
+                                Сгенерировать с AI
+                            </button>
+                            <p className="text-xs muted">
+                                AI разобьёт курс на модули, создаст уроки и квизы.
+                            </p>
+                        </form>
+                    </div>
+                </aside>
+            </div>
+        </AppShell>
     );
 }

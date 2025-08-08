@@ -1,10 +1,10 @@
-// src/pages/CourseDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchCourseModules } from '../api/modules';
 import { fetchModuleLessons } from '../api/lessons';
 import { fetchLessonDetail } from '../api/lessonDetails';
+import { AppShell } from '../components/AppShell';
 
 export function CourseDetail() {
     const { courseId } = useParams();
@@ -17,89 +17,95 @@ export function CourseDetail() {
     const [lessonDetail, setLessonDetail] = useState({ title: '', content: '' });
     const [error, setError] = useState('');
 
-    // Загрузить модули курса
     useEffect(() => {
         fetchCourseModules(token, courseId)
             .then(mods => {
                 setModules(mods);
-                if (mods.length > 0) {
-                    setSelectedModuleId(mods[0].id);
-                }
+                if (mods.length > 0) setSelectedModuleId(mods[0].id);
             })
             .catch(err => setError(err.message));
     }, [token, courseId]);
 
-    // При смене модуля — загрузить уроки
     useEffect(() => {
         if (!selectedModuleId) return;
         fetchModuleLessons(token, selectedModuleId)
             .then(ls => {
                 setLessonsByModule(prev => ({ ...prev, [selectedModuleId]: ls }));
-                if (ls.length > 0) {
-                    setSelectedLessonId(ls[0].id);
-                }
+                if (ls.length > 0) setSelectedLessonId(ls[0].id);
             })
             .catch(err => setError(err.message));
     }, [token, selectedModuleId]);
 
-    // При смене урока — загрузить контент
     useEffect(() => {
         if (!selectedLessonId) return;
         fetchLessonDetail(token, selectedLessonId)
-            .then(detail => setLessonDetail(detail))
+            .then(setLessonDetail)
             .catch(err => setError(err.message));
     }, [token, selectedLessonId]);
 
-
-
     return (
-        <div className="min-h-screen bg-[#F8FAFC] p-6 flex">
-            {/* Сайдбар */}
-            <aside className="w-80 bg-white p-4 rounded-lg shadow-md mr-6 overflow-auto">
-                <h2 className="text-xl font-semibold mb-4 text-[#003366]">
-                    Модули
-                </h2>
-                {modules.map(mod => (
-                    <div key={mod.id} className="mb-6">
-                        <button
-                            onClick={() => setSelectedModuleId(mod.id)}
-                            className={`w-full text-left font-medium mb-2 p-2 rounded ${
-                                mod.id === selectedModuleId
-                                    ? 'bg-[#03C5C2] text-white'
-                                    : 'text-[#03C5C2] hover:bg-[#E0F7F6]'
-                            }`}
-                        >
-                            {mod.title}
-                        </button>
-                        <ul className="pl-4">
-                            {(lessonsByModule[mod.id] || []).map(lesson => (
-                                <li key={lesson.id} className="mb-1">
-                                    <button
-                                        onClick={() => setSelectedLessonId(lesson.id)}
-                                        className={`w-full text-left p-1 rounded ${
-                                            lesson.id === selectedLessonId
-                                                ? 'bg-[#FFCD02] text-white'
-                                                : 'text-[#1F2937] hover:bg-[#FFF9E0]'
-                                        }`}
-                                    >
-                                        {lesson.title}
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ))}
-            </aside>
-
-            {/* Основной контент урока */}
-            <main className="flex-1 bg-white p-6 rounded-lg shadow-md overflow-auto">
-                <h2 className="text-2xl font-bold mb-4 text-[#003366]">
-                    {lessonDetail.title}
-                </h2>
-                <div className="text-[#1F2937] whitespace-pre-line">
-                    {lessonDetail.content}
+        <AppShell>
+            {error && (
+                <div className="glass rounded-xl p-3 text-red-300 mb-4">
+                    Ошибка: {error}
                 </div>
-            </main>
-        </div>
+            )}
+            <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-8">
+                {/* Сайдбар модулей/уроков */}
+                <aside className="glass gradient-border rounded-2xl p-4 h-[80vh] overflow-auto">
+                    <h2 className="text-lg font-bold mb-3">Модули</h2>
+                    <div className="space-y-5">
+                        {modules.map(mod => (
+                            <div key={mod.id}>
+                                <button
+                                    onClick={() => setSelectedModuleId(mod.id)}
+                                    className={`w-full text-left mb-2 px-3 py-2 rounded-xl border transition
+                    ${mod.id === selectedModuleId
+                                        ? 'border-[#03C5C2] bg-[rgba(3,197,194,0.08)]'
+                                        : 'border-white/10 hover:bg-white/5'}`}
+                                >
+                                    <div className="font-semibold">{mod.title}</div>
+                                    <div className="text-xs muted">Модуль #{mod.id}</div>
+                                </button>
+                                <ul className="space-y-1 ml-1">
+                                    {(lessonsByModule[mod.id] || []).map(lesson => (
+                                        <li key={lesson.id}>
+                                            <button
+                                                onClick={() => setSelectedLessonId(lesson.id)}
+                                                className={`w-full text-left text-sm px-3 py-2 rounded-lg transition
+                          ${lesson.id === selectedLessonId
+                                                    ? 'bg-[#FFCD02] text-[#0B1220]'
+                                                    : 'hover:bg-white/5 text-white'}`}
+                                            >
+                                                {lesson.title}
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                </aside>
+
+                {/* Контент урока */}
+                <section className="space-y-4">
+                    <div className="glass gradient-border rounded-2xl p-6">
+                        <div className="flex items-center justify-between">
+                            <h1 className="h1">{lessonDetail.title || 'Выберите урок'}</h1>
+                            <button className="btn-neon rounded-xl px-4 py-2 text-sm">Сгенерировать видео</button>
+                        </div>
+                        <div className="mt-4 text-[15px] leading-7 whitespace-pre-line">
+                            {lessonDetail.content || 'Контент урока появится здесь.'}
+                        </div>
+                    </div>
+
+                    {/* Заглушка для квизов – вставите реальные данные позже */}
+                    <div className="glass rounded-2xl p-6">
+                        <h2 className="text-xl font-bold mb-3">Квиз по уроку</h2>
+                        <p className="muted">Вопросы появятся после генерации/сохранения.</p>
+                    </div>
+                </section>
+            </div>
+        </AppShell>
     );
 }
